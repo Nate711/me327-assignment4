@@ -1,7 +1,7 @@
 // Pin declares
-int pwmPin = 5; // PWM output pin for motor 1
-int dirPin = 8; // direction output pin for motor 1
-int sensorPosPin = A2; // input pin for MR sensor
+int MOTOR_PWM_PIN = 5; // PWM output pin for motor 1
+int MOTOR_DIR_PIN = 8; // direction output pin for motor 1
+int POSITION_SENSOR_PIN = A2; // input pin for MR sensor
 
 const double COUNTS_PER_ROTATION = 980;
 
@@ -25,30 +25,30 @@ void set_pwm_frequency(int pin, int divisor);
 
 void initialize_mr_sensor() {
   // Input pins
-  pinMode(sensorPosPin, INPUT); // set MR sensor pin to be an input
+  pinMode(POSITION_SENSOR_PIN, INPUT); // set MR sensor pin to be an input
   
   // Initialize position valiables
-  last_last_raw_position = analogRead(sensorPosPin);
-  last_raw_position = analogRead(sensorPosPin);
+  last_last_raw_position = analogRead(POSITION_SENSOR_PIN);
+  last_raw_position = analogRead(POSITION_SENSOR_PIN);
   flips = 0;
 }
 
 void initialize_motor() {
   // Set PWM frequency 
-  set_pwm_frequency(pwmPin, 1); 
+  set_pwm_frequency(MOTOR_PWM_PIN, 1); 
   
   // Output pins
-  pinMode(pwmPin, OUTPUT);  // PWM pin for motor A
-  pinMode(dirPin, OUTPUT);  // dir pin for motor A
+  pinMode(MOTOR_PWM_PIN, OUTPUT);  // PWM pin for motor A
+  pinMode(MOTOR_DIR_PIN, OUTPUT);  // dir pin for motor A
   
   // Initialize motor 
-  analogWrite(pwmPin, 0);     // set to not be spinning (0/255)
-  digitalWrite(dirPin, LOW);  // set direction
+  analogWrite(MOTOR_PWM_PIN, 0);     // set to not be spinning (0/255)
+  digitalWrite(MOTOR_DIR_PIN, LOW);  // set direction
 }
 
 double read_mr_sensor() {
   // Get voltage output by MR sensor
-  raw_position = analogRead(sensorPosPin);  //current raw position from MR sensor
+  raw_position = analogRead(POSITION_SENSOR_PIN);  //current raw position from MR sensor
 
   // Calculate differences between subsequent MR sensor readings
   raw_difference = raw_position - last_raw_position;              //difference btwn current raw position and last raw position
@@ -77,9 +77,9 @@ double read_mr_sensor() {
 void command_motor(double Tp) {
   // Determine correct direction for motor torque
   if(Tp > 0) { 
-    digitalWrite(dirPin, HIGH);
+    digitalWrite(MOTOR_DIR_PIN, HIGH);
   } else {
-    digitalWrite(dirPin, LOW);
+    digitalWrite(MOTOR_DIR_PIN, LOW);
   }
 
   // Compute the duty cycle required to generate Tp (torque at the motor pulley)
@@ -92,7 +92,7 @@ void command_motor(double Tp) {
     duty = 0;
   }  
   unsigned int output = (int)(duty* 255);     // convert duty cycle to output signal
-  analogWrite(pwmPin, output);                // output the signal
+  analogWrite(MOTOR_PWM_PIN, output);                // output the signal
 }
 
 // --------------------------------------------------------------
