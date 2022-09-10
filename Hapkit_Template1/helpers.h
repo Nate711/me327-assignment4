@@ -3,34 +3,36 @@ int MOTOR_PWM_PIN = 5; // PWM output pin for motor 1
 int MOTOR_DIR_PIN = 8; // direction output pin for motor 1
 int POSITION_SENSOR_PIN = A2; // input pin for MR sensor
 
+const int PWM_DIVIDER = 1;
+const int PRESCALE_FACTOR = 64 / PWM_DIVIDER;
+
 const double COUNTS_PER_ROTATION = 920;
 const int COMMON_SPEED = 200;
 const int FLIP_THRESHOLD = 700;     // threshold to determine whether or not a flip over the 180 degree mark occurred
-
-// Position tracking variables
-//int raw_position = 0;           // current raw reading from MR sensor
-//int last_raw_position = 0;      // last raw reading from MR sensor
-//int flips = 0;                  // keeps track of the number of flips over the 180deg mark
-
 
 // Position tracking variables
 boolean flipped = false;        // Whether we've flipped
 int raw_position = 0;           // current raw reading from MR sensor
 int last_raw_position = 0;      // last raw reading from MR sensor
 int last_last_raw_position = 0; // last last raw reading from MR sensor
-int flips = 0;             // keeps track of the number of flips over the 180deg mark
+int flips = 0;                  // keeps track of the number of flips over the 180deg mark
 int raw_difference = 0;
 int last_raw_difference = 0;
 int raw_offset = 0;
 int last_raw_offset = 0;
 
+// Velocity tracking variables
+double last_handle_position = 0.0;
+double smoothed_velocity = 0.0;
 
-
+// Loop speed tracking
+const int SLOW_LOOP_THRESHOLD_MICROS = 5000; // Longest loop time allowed in microseconds
+long last_loop = 0;
 
 void initialize_mr_sensor();
 void initialize_motor();
 double read_mr_sensor();
-void command_motor(double Tp);
+void command_motor(double pulley_torque);
 void set_pwm_frequency(int pin, int divisor);
 
 void initialize_mr_sensor() {
@@ -44,7 +46,7 @@ void initialize_mr_sensor() {
 
 void initialize_motor() {
   // Set PWM frequency 
-  set_pwm_frequency(MOTOR_PWM_PIN, 1); 
+  set_pwm_frequency(MOTOR_PWM_PIN, PWM_DIVIDER); 
   
   // Output pins
   pinMode(MOTOR_PWM_PIN, OUTPUT);  // PWM pin for motor A
@@ -56,24 +58,6 @@ void initialize_motor() {
 }
 
 double read_mr_sensor() {
-//  raw_position = analogRead(POSITION_SENSOR_PIN);  
-//  int position_delta = raw_position - last_raw_position;
-//
-//  if(abs(position_delta) > COMMON_SPEED && abs(position_delta) <= FLIP_THRESHOLD) {
-//    return last_raw_position + flips * COUNTS_PER_ROTATION;
-//  }
-//  else {
-//    if(position_delta > FLIP_THRESHOLD) {
-//      flips--;
-//      Serial.print("--------------------");
-//    } else if(position_delta < -FLIP_THRESHOLD) {
-//      Serial.print("++++++++++++++++++++");
-//      flips++;
-//    }
-//    last_raw_position = raw_position;
-//    return raw_position + flips * COUNTS_PER_ROTATION;
-//  }
-
   raw_position = analogRead(POSITION_SENSOR_PIN);  //current raw position from MR sensor
 
   // Calculate differences between subsequent MR sensor readings
@@ -100,16 +84,23 @@ double read_mr_sensor() {
   return last_raw_position + flips * COUNTS_PER_ROTATION;
 }
 
-void command_motor(double Tp) {
+double calculate_smoothed_velocity(double handle_position, double dt) {
+  double velocity_estimate = (handle_position - last_handle_position) / dt;
+  smoothed_velocity = 0.9 * smoothed_velocity + 0.1 * velocity_estimate;
+  last_handle_position = handle_position;
+  return smoothed_velocity;
+}
+
+void command_motor(double motor_torque) {
   // Determine correct direction for motor torque
-  if(Tp > 0) { 
+  if(motor_torque > 0) { 
     digitalWrite(MOTOR_DIR_PIN, HIGH);
   } else {
     digitalWrite(MOTOR_DIR_PIN, LOW);
   }
 
   // Compute the duty cycle required to generate Tp (torque at the motor pulley)
-  double duty = sqrt(abs(Tp)/0.0183);
+  double duty = sqrt(abs(motor_torque)/0.0183);
 
   // Make sure the duty cycle is between 0 and 100%
   if (duty > 1) {            
@@ -153,4 +144,31 @@ void set_pwm_frequency(int pin, int divisor) {
     }
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
+}
+
+// Returns the actual number of elapsed microseconds since start. 
+// Because we are changing the TIM1 prescaler, just using micros()
+// will give an inaccurate time. Similarly, millis() will also be wrong.
+long accurate_micros() {
+  return micros() / PRESCALE_FACTOR;
+}
+
+long accurate_delay(double delay_millis) {
+  delay(delay_millis * PRESCALE_FACTOR);
+}
+
+void initialize_loop_checker() {
+  last_loop = accurate_micros();
+}
+
+void check_loop_speed() {
+  long now = accurate_micros();
+  if(now - last_loop > SLOW_LOOP_THRESHOLD_MICROS) {
+    command_motor(0.0);
+    for(int i = 0 ;i < 100; i++) {
+      Serial.println("DETECTED SLOW LOOP RATE. STOPPING PROGRAM. PLEASE FIX YOUR CODE.");
+      accurate_delay(5);
+    }
+  }
+  last_loop = now;
 }

@@ -22,12 +22,13 @@ double calculate_handle_position(double updated_position) {
 
   // TODO: remove answer code
   // Define kinematic parameters you may need
-  //  double rh = 0.075; // handle radius [m]
-  //  double m = 0.0128; // [deg/pos]
-  //  double b = - 8.7113; // [deg]
-  //  double ts = m * updated_position + b;
-  //  xh = rh * (ts * 3.14159 / 180); // handle position [m]
-  //  Serial.println(xh);
+  double rh = 0.075; // handle radius [m]
+  double m = 0.0128; // [deg/pos]
+  double b = - 8.7113; // [deg]
+  double ts = m * updated_position + b;
+  double xh = rh * (ts * 3.14159 / 180); // handle position [m]
+  return xh;
+//  Serial.println(xh);
   return 0.0;
 }
 
@@ -45,10 +46,11 @@ double calculate_pulley_torque(double force) {
   // STUDENT CODE HERE
   
   // TODO: remove answer code
-  //  double rs = 0.073152;   // sector radius [m]
-  //  double rp = 0.004191;   // pulley radius [m]
-  //  return rp / rs * rh * force; // [Nm]
-  return 0.0;
+  double rh = 0.075;
+  double rs = 0.073152;   // sector radius [m]
+  double rp = 0.004191;   // pulley radius [m]
+  return rp / rs * rh * force; // [Nm]
+//  return 0.0;
 }
 
 /*
@@ -57,13 +59,14 @@ double calculate_pulley_torque(double force) {
  * Specifies a desired force to render on the hapkit
  * 
  * Args:
- *  None
+ *  handle_position: Handle position in meters
+ *  handle_velocity: Approximate handle velocity in meters/second
  * Return:
  *  Desired force in Newtons
  */
-double student_specified_force() {
+double student_specified_force(double handle_position, double handle_velocity) {
   // STUDENT CODE HERE
-  return 0.0;
+  return -10 * handle_velocity - 100 * handle_position;
 }
 
 void setup() 
@@ -73,6 +76,7 @@ void setup()
   
   initialize_mr_sensor();
   initialize_motor();
+  initialize_loop_checker();
 }
 
 int count=0;
@@ -80,16 +84,27 @@ void loop()
 {
   // Compute position in counts
   double updated_position = read_mr_sensor();
-  if(count % 10 == 0) Serial.println(updated_position);
-  count++;
 
   // Compute position in meters
   double handle_position = calculate_handle_position(updated_position);
+  // Compute velocity in meters/second
+  double smoothed_velocity = calculate_smoothed_velocity(handle_position, /*DT=*/0.001);
+
+  // Print out handle position and velocity
+  if(count % 10 == 0) {
+    Serial.print(handle_position, 3);
+    Serial.print(" ");
+    Serial.println(smoothed_velocity, 3);
+  }
+  count++;
   
   // Assign a motor output force in Newtons
-  double force = student_specified_force();
+  double force = student_specified_force(handle_position, smoothed_velocity);
   double pulley_torque = calculate_pulley_torque(force);
   
-  // Force output
-  command_motor(pulley_torque);  
+  // Command the motor
+  command_motor(pulley_torque);
+
+  // Check if your loop speed is too slow, and if so, print an error message.
+  check_loop_speed();
 }
