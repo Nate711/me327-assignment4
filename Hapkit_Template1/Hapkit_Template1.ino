@@ -75,10 +75,13 @@ void setup()
   initialize_motor();
 }
 
+int count=0;
 void loop()
 {
   // Compute position in counts
   double updated_position = read_mr_sensor();
+  if(count % 10 == 0) Serial.println(updated_position);
+  count++;
 
   // Compute position in meters
   double handle_position = calculate_handle_position(updated_position);
@@ -88,6 +91,5 @@ void loop()
   double pulley_torque = calculate_pulley_torque(force);
   
   // Force output
-  command_motor(pulley_torque);
-  
+  command_motor(pulley_torque);  
 }

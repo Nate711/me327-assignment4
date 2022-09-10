@@ -3,7 +3,15 @@ int MOTOR_PWM_PIN = 5; // PWM output pin for motor 1
 int MOTOR_DIR_PIN = 8; // direction output pin for motor 1
 int POSITION_SENSOR_PIN = A2; // input pin for MR sensor
 
-const double COUNTS_PER_ROTATION = 980;
+const double COUNTS_PER_ROTATION = 920;
+const int COMMON_SPEED = 200;
+const int FLIP_THRESHOLD = 700;     // threshold to determine whether or not a flip over the 180 degree mark occurred
+
+// Position tracking variables
+//int raw_position = 0;           // current raw reading from MR sensor
+//int last_raw_position = 0;      // last raw reading from MR sensor
+//int flips = 0;                  // keeps track of the number of flips over the 180deg mark
+
 
 // Position tracking variables
 boolean flipped = false;        // Whether we've flipped
@@ -15,7 +23,9 @@ int raw_difference = 0;
 int last_raw_difference = 0;
 int raw_offset = 0;
 int last_raw_offset = 0;
-const int FLIP_THRESHOLD = 700;     // threshold to determine whether or not a flip over the 180 degree mark occurred
+
+
+
 
 void initialize_mr_sensor();
 void initialize_motor();
@@ -28,7 +38,6 @@ void initialize_mr_sensor() {
   pinMode(POSITION_SENSOR_PIN, INPUT); // set MR sensor pin to be an input
   
   // Initialize position valiables
-  last_last_raw_position = analogRead(POSITION_SENSOR_PIN);
   last_raw_position = analogRead(POSITION_SENSOR_PIN);
   flips = 0;
 }
@@ -47,7 +56,24 @@ void initialize_motor() {
 }
 
 double read_mr_sensor() {
-  // Get voltage output by MR sensor
+//  raw_position = analogRead(POSITION_SENSOR_PIN);  
+//  int position_delta = raw_position - last_raw_position;
+//
+//  if(abs(position_delta) > COMMON_SPEED && abs(position_delta) <= FLIP_THRESHOLD) {
+//    return last_raw_position + flips * COUNTS_PER_ROTATION;
+//  }
+//  else {
+//    if(position_delta > FLIP_THRESHOLD) {
+//      flips--;
+//      Serial.print("--------------------");
+//    } else if(position_delta < -FLIP_THRESHOLD) {
+//      Serial.print("++++++++++++++++++++");
+//      flips++;
+//    }
+//    last_raw_position = raw_position;
+//    return raw_position + flips * COUNTS_PER_ROTATION;
+//  }
+
   raw_position = analogRead(POSITION_SENSOR_PIN);  //current raw position from MR sensor
 
   // Calculate differences between subsequent MR sensor readings
@@ -71,7 +97,7 @@ double read_mr_sensor() {
   } else {                                                // anytime no flip has occurred
     flipped = false;
   }
-  return raw_position + flips * COUNTS_PER_ROTATION;
+  return last_raw_position + flips * COUNTS_PER_ROTATION;
 }
 
 void command_motor(double Tp) {
