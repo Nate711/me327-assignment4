@@ -19,16 +19,7 @@
  */
 double calculate_handle_position(double updated_position) {
   // STUDENT CODE HERE
-
-  // TODO: remove answer code
-  // Define kinematic parameters you may need
-  double rh = 0.075; // handle radius [m]
-  double m = 0.0128; // [deg/pos]
-  double b = - 8.7113; // [deg]
-  double ts = m * updated_position + b;
-  double xh = rh * (ts * 3.14159 / 180); // handle position [m]
-  return xh;
-//  return 0.0;
+  return 0.0;
 }
 
 /*
@@ -43,13 +34,7 @@ double calculate_handle_position(double updated_position) {
  */
 double calculate_pulley_torque(double force) {
   // STUDENT CODE HERE
-  
-  // TODO: remove answer code
-  double rh = 0.075;
-  double rs = 0.073152;   // sector radius [m]
-  double rp = 0.004191;   // pulley radius [m]
-  return rp / rs * rh * force; // [Nm]
-//  return 0.0;
+  return 0.0;
 }
 
 /*
@@ -65,7 +50,7 @@ double calculate_pulley_torque(double force) {
  */
 double student_specified_force(double handle_position, double handle_velocity) {
   // STUDENT CODE HERE
-  return -10 * handle_velocity - 100 * handle_position;
+  return 0.0;
 }
 
 void setup() 
