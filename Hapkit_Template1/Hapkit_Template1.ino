@@ -7,25 +7,62 @@
 #include <math.h>
 #include "helpers.h"
 
-double calculate_handle_position(double updatedPos) {
+/*
+ * calculate_handle_position
+ * 
+ * Calculates the position of the hapkit handle given the sensor reading
+ * 
+ * Args:
+ *  updated_position: Position reading from sensor
+ * Return:
+ *  Handle position in meters
+ */
+double calculate_handle_position(double updated_position) {
+  // STUDENT CODE HERE
+
+  // TODO: remove answer code
   // Define kinematic parameters you may need
   //  double rh = 0.075; // handle radius [m]
   //  double m = 0.0128; // [deg/pos]
   //  double b = - 8.7113; // [deg]
-  //  double ts = m * updatedPos + b;
+  //  double ts = m * updated_position + b;
   //  xh = rh * (ts * 3.14159 / 180); // handle position [m]
   //  Serial.println(xh);
   return 0.0;
 }
 
+/*
+ * calculate_pulley_torque
+ * 
+ * Calculates the pulley torque necessary to achieve the desired force
+ * 
+ * Args:
+ *  force: Desired force in Newtons
+ * Return:
+ *  Motor torque (in Newton-meters) to achieve desired force.
+ */
 double calculate_pulley_torque(double force) {
+  // STUDENT CODE HERE
+  
+  // TODO: remove answer code
   //  double rs = 0.073152;   // sector radius [m]
   //  double rp = 0.004191;   // pulley radius [m]
   //  return rp / rs * rh * force; // [Nm]
   return 0.0;
 }
 
-double specify_force() {
+/*
+ * student_specified_force
+ * 
+ * Specifies a desired force to render on the hapkit
+ * 
+ * Args:
+ *  None
+ * Return:
+ *  Desired force in Newtons
+ */
+double student_specified_force() {
+  // STUDENT CODE HERE
   return 0.0;
 }
 
@@ -40,18 +77,17 @@ void setup()
 
 void loop()
 {
-  // Compute position in counts (do not change)
+  // Compute position in counts
   double updated_position = read_mr_sensor();
 
   // Compute position in meters
   double handle_position = calculate_handle_position(updated_position);
   
   // Assign a motor output force in Newtons
-  // ADD YOUR CODE HERE
-  double force = specify_force();
+  double force = student_specified_force();
   double pulley_torque = calculate_pulley_torque(force);
   
-  // Force output (do not change) 
+  // Force output
   command_motor(pulley_torque);
   
 }
