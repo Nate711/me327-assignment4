@@ -28,8 +28,7 @@ double calculate_handle_position(double updated_position) {
   double ts = m * updated_position + b;
   double xh = rh * (ts * 3.14159 / 180); // handle position [m]
   return xh;
-//  Serial.println(xh);
-  return 0.0;
+//  return 0.0;
 }
 
 /*
@@ -79,18 +78,17 @@ void setup()
   initialize_loop_checker();
 }
 
-int count=0;
+int count = 0;
 void loop()
 {
   // Compute position in counts
   double updated_position = read_mr_sensor();
 
-  // Compute position in meters
+  // Compute position [m] and velocity [m/s]
   double handle_position = calculate_handle_position(updated_position);
-  // Compute velocity in meters/second
   double smoothed_velocity = calculate_smoothed_velocity(handle_position, /*DT=*/0.001);
 
-  // Print out handle position and velocity
+  // Print out handle position and velocity every 10 loops
   if(count % 10 == 0) {
     Serial.print(handle_position, 3);
     Serial.print(" ");
@@ -98,7 +96,7 @@ void loop()
   }
   count++;
   
-  // Assign a motor output force in Newtons
+  // Assign a motor output force [N]
   double force = student_specified_force(handle_position, smoothed_velocity);
   double pulley_torque = calculate_pulley_torque(force);
   
